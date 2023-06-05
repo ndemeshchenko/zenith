@@ -1,0 +1,7 @@
+Zenith 9.0
+==================
+
+Zenith is a monitoring tool that focuses on scalability, minimal configuration, and intuitive visualization. 
+It is designed to provide quick and clear visibility into the state of monitored systems.
+
+Zenith is written in Golang and using MongoDB as storage backend.
