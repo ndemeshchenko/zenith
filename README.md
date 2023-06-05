@@ -1,4 +1,4 @@
-Zenith 9.0
+Zenith Monitoring - API
 ==================
 
 Zenith is a monitoring tool that focuses on scalability, minimal configuration, and intuitive visualization. 
