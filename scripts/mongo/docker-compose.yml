@@ -12,8 +12,18 @@ services:
       - ./init-mongo.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     ports:
       - 27017:27017
+  zenith-api:
+    image: ghcr.io/ndemeshchenko/zenith-api:latest
+    restart: always
+    environment:
+      MONGO_DATABASE: zenith
+      MONGO_USERNAME: zenith
+      MONGO_PASSWORD: zenith
+      MONGO_HOST: localhost
+      MONGO_PORT: 27017
+    ports:
+      - 8080:8080
 
-#  mongo-express:
 #    image: mongo-express
 #    restart: always
 #    ports:

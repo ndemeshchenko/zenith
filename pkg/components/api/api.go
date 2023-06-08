@@ -9,6 +9,7 @@ import (
 	"github.com/ndemeshchenko/zenith/pkg/components/models/environment"
 	prometheusWebhook "github.com/ndemeshchenko/zenith/pkg/components/webhooks/prometheus"
 	"go.mongodb.org/mongo-driver/mongo"
+	"log"
 	"net/http"
 )
 
@@ -18,6 +19,7 @@ func Init(config *config.Config, mongoClient *mongo.Client) {
 	}
 	router := gin.Default()
 	router.Use(cors.Default())
+	router.Use(TokenAuthMiddleware(config.AuthToken))
 
 	v1 := router.Group("/api")
 	{
@@ -77,4 +79,18 @@ func Init(config *config.Config, mongoClient *mongo.Client) {
 	}
 
 	router.Run("0.0.0.0:8080")
+}
+
+// TokenAuthMiddleware Super simple auth middleware just to cover the basics
+func TokenAuthMiddleware(token string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authToken := c.GetHeader("X-Auth-Token")
+		log.Println("authToken: ", authToken)
+		if authToken != token {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "Unauthorized",
+			})
+		}
+		c.Next()
+	}
 }

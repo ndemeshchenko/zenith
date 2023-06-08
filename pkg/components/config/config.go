@@ -1,6 +1,10 @@
 package config
 
-import "os"
+import (
+	"fmt"
+	"math/rand"
+	"os"
+)
 
 type Config struct {
 	MongoHost     string
@@ -9,6 +13,7 @@ type Config struct {
 	MongoUsername string
 	MongoPassword string
 	Debug         bool
+	AuthToken     string
 }
 
 func InitConfigurations() *Config {
@@ -41,6 +46,13 @@ func InitConfigurations() *Config {
 		debug = true
 	}
 
+	authToken := os.Getenv("AUTH_TOKEN")
+	if authToken == "" {
+		b := make([]byte, 32)
+		rand.Read(b)
+		authToken = fmt.Sprintf("%x", b)
+	}
+
 	return &Config{
 		MongoHost:     mongoHost,
 		MongoPort:     mongoPort,
@@ -48,6 +60,7 @@ func InitConfigurations() *Config {
 		MongoUsername: mongoUsername,
 		MongoPassword: mongoPassword,
 		Debug:         debug,
+		AuthToken:     authToken,
 	}
 
 }
