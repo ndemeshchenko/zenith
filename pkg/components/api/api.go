@@ -18,9 +18,17 @@ func Init(config *config.Config, mongoClient *mongo.Client) {
 	}
 	router := gin.Default()
 	router.Use(cors.Default())
-	router.Use(TokenAuthMiddleware(config.AuthToken))
 
-	v1 := router.Group("/api")
+	healthz := router.Group("/healthz")
+	{
+		healthz.GET("", func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{
+				"status": "OK",
+			})
+		})
+	}
+
+	v1 := router.Group("/api", TokenAuthMiddleware(config.AuthToken))
 	{
 		v1.GET("/ping", func(c *gin.Context) {
 			c.JSON(200, gin.H{
