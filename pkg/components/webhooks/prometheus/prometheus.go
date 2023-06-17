@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	zenithmongo "github.com/ndemeshchenko/zenith/pkg/components/models/alert"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"io"
+	"log"
 	"time"
 )
 
 func ProcessWebhookAlert(payload io.ReadCloser, mongoClient *mongo.Client) error {
-	//fmt.Println("ProcessWebhookAlert")
 	jsonData, err := io.ReadAll(payload)
 	if err != nil {
 		return err
@@ -36,15 +37,24 @@ func ProcessWebhookAlert(payload io.ReadCloser, mongoClient *mongo.Client) error
 
 	dupAlert := alert.FindDuplicate(mongoClient)
 	if dupAlert != nil {
-		err = dupAlert.UpdateDuplicated(mongoClient, &alert)
+		id, err := dupAlert.UpdateDuplicated(mongoClient, &alert)
+		if err != nil {
+			log.Println("failed to update duplicated alert: ", id, err)
+			return err
+		}
 		return nil
 	}
 
-	alert.Create(mongoClient)
+	a, err := alert.Create(mongoClient)
+	log.Println("created alert: ", a.(primitive.ObjectID).Hex(), err)
 	return nil
 }
 
 func transformWebhookAlert(wap WebhookAlertPayload) (zenithmongo.Alert, error) {
+	if len(wap.Alerts) == 0 {
+		return zenithmongo.Alert{}, fmt.Errorf("empty alerts")
+	}
+
 	alert := zenithmongo.Alert{
 		Event:        wap.Alerts[0].Labels.Alertname,
 		Environment:  wap.Alerts[0].Labels.Environment,
@@ -56,6 +66,7 @@ func transformWebhookAlert(wap WebhookAlertPayload) (zenithmongo.Alert, error) {
 		Text:         wap.Alerts[0].Annotations.Description,
 		Fingerprint:  wap.Alerts[0].Fingerprint,
 		CreateTime:   time.Now(),
+		UpdateTime:   time.Now(),
 		GeneratorURL: wap.Alerts[0].GeneratorURL,
 		RunbookURL:   wap.Alerts[0].Annotations.Runbook,
 		Summary:      wap.Alerts[0].Annotations.Summary,

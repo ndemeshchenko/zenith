@@ -73,6 +73,52 @@ func GetOne(mongoClient *mongo.Client, id string) (*Alert, error) {
 	return &result, nil
 }
 
+func FindByFingerprint(mongoClient *mongo.Client, fingerprint string) (*Alert, error) {
+	collection := mongoClient.Database("zenith").Collection("alerts")
+
+	// Execute the find operation
+	var result Alert
+	err := collection.FindOne(context.Background(), bson.M{"fingerprint": fingerprint}).Decode(&result)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve documents: %v", err)
+	}
+
+	return &result, nil
+}
+
+func DeleteOne(mongoClient *mongo.Client, id string) error {
+	collection := mongoClient.Database("zenith").Collection("alerts")
+
+	// Execute the find operation
+	objID, _ := primitive.ObjectIDFromHex(id)
+	filter := bson.M{"_id": objID}
+
+	_, err := collection.DeleteOne(context.Background(), filter)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve documents: %v", err)
+	}
+
+	return nil
+}
+
+func UpdateStatus(mongoClient *mongo.Client, id string, action string) error {
+	collection := mongoClient.Database("zenith").Collection("alerts")
+
+	statuses := map[string]string{"acknowledge": "acknowledged", "resolve": "resolved"}
+
+	// Execute the find operation
+	objID, _ := primitive.ObjectIDFromHex(id)
+	filter := bson.M{"_id": objID}
+	update := bson.M{"$set": bson.M{"status": statuses[action]}}
+
+	_, err := collection.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve documents: %v", err)
+	}
+
+	return nil
+}
+
 func SeverityToLevel(severity string) int8 {
 	switch severity {
 	case "critical":
@@ -85,16 +131,3 @@ func SeverityToLevel(severity string) int8 {
 		return 4
 	}
 }
-
-//func LevelToSeverity(level int8) string {
-//	switch level {
-//	case 1:
-//		return "critical"
-//	case 2:
-//		return "warning"
-//	case 3:
-//		return "info"
-//	default:
-//		return "unknown"
-//	}
-//}

@@ -15,15 +15,15 @@ func main() {
 	_, _ = maxprocs.Set()
 
 	log.SetFlags(log.Ldate | log.Lshortfile)
-	log.Println("Iitializing configurations")
+	log.Println("Initializing configurations")
 	appConfig := config.InitConfigurations()
 
-	log.Println("Iitializing MongoDB connection")
-	mongoClient, error := mongo.InitDBConnection(appConfig)
-	if error != nil {
-		panic(error)
+	log.Println("Initializing MongoDB connection")
+	mongoClient, err := mongo.InitDBConnection(appConfig)
+	if err != nil {
+		panic(err)
 	}
-	log.Println("authToken: ", appConfig.AuthToken)
+	//log.Println("authToken: ", appConfig.AuthToken)
 	api.Init(appConfig, mongoClient)
 
 	defer mongoClient.Disconnect(context.Background())

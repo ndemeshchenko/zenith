@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"time"
 )
@@ -43,16 +44,16 @@ type Alert struct {
 
 }
 
-func (a *Alert) Create(c *mongo.Client) error {
+func (a *Alert) Create(c *mongo.Client) (interface{}, error) {
 	// Access the "alerts" collection
 	collection := c.Database("zenith").Collection("alerts")
 
 	// Insert the alert into the collection
-	_, err := collection.InsertOne(context.Background(), a)
+	one, err := collection.InsertOne(context.Background(), a)
 	if err != nil {
-		return err
+		return primitive.ObjectID{}, fmt.Errorf("failed to insert alert: %v", err)
 	}
-	return nil
+	return one.InsertedID, nil
 }
 
 func (a *Alert) FindDuplicate(c *mongo.Client) *Alert {
@@ -72,7 +73,7 @@ func (a *Alert) FindDuplicate(c *mongo.Client) *Alert {
 	return nil
 }
 
-func (a *Alert) UpdateDuplicated(c *mongo.Client, wa *Alert) error {
+func (a *Alert) UpdateDuplicated(c *mongo.Client, wa *Alert) (interface{}, error) {
 	var err error
 	// Access the "alerts" collection
 	collection := c.Database("zenith").Collection("alerts")
@@ -87,6 +88,9 @@ func (a *Alert) UpdateDuplicated(c *mongo.Client, wa *Alert) error {
 			{"status", wa.Status},
 		}},
 	}
-	_, err = collection.UpdateOne(context.Background(), filter, update)
-	return err
+	one, err := collection.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		return primitive.ObjectID{}, fmt.Errorf("failed to update alert: %v", err)
+	}
+	return one.UpsertedID, nil
 }
