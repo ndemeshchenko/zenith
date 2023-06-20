@@ -84,7 +84,7 @@ func TestUpdateStatus(t *testing.T) {
 
 	assert.Nil(t, err)
 
-	alerts, err := alert.GetAll(mongoClient)
+	alerts, err := alert.GetAll("", mongoClient)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(alerts))
 
@@ -113,7 +113,7 @@ func TestDeleteAction(t *testing.T) {
 
 	assert.Nil(t, err)
 
-	alerts, err := alert.GetAll(mongoClient)
+	alerts, err := alert.GetAll("", mongoClient)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(alerts))
 
@@ -155,4 +155,36 @@ func TestDuplicateAlertsPromWebHook(t *testing.T) {
 	assert.NotNil(t, alertRecord)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, alertRecord.DuplicateCount)
+}
+
+func TestDistinctEnvAndCluster(t *testing.T) {
+	mongoClient, teardown := setupMongo(t)
+	// perform assertions
+	defer teardown(t)
+
+	uniqEnvMap := make(map[string]bool)
+	uniqEnvClusterMap := make(map[string]map[string]bool)
+
+	for i := 0; i < 30; i++ {
+		alert, _ := prometheusTest.GeneratePrometheusWebhook()
+
+		jsonString, err := json.Marshal(alert)
+		payloadReader := strings.NewReader(string(jsonString))
+		payload := io.NopCloser(payloadReader)
+		err = prometheusWebhook.ProcessWebhookAlert(payload, mongoClient)
+
+		uniqEnvMap[alert.Alerts[0].Labels.Environment] = true
+
+		if uniqEnvClusterMap[alert.Alerts[0].Labels.Environment] == nil {
+			uniqEnvClusterMap[alert.Alerts[0].Labels.Environment] = make(map[string]bool)
+		}
+
+		uniqEnvClusterMap[alert.Alerts[0].Labels.Environment][alert.Alerts[0].Labels.Cluster] = true
+		assert.Nil(t, err)
+	}
+
+	for env, _ := range uniqEnvMap {
+		distinctClusters, _ := alert.GetDistinctClustersByEnvironment(env, mongoClient)
+		assert.Equal(t, len(uniqEnvClusterMap[env]), len(distinctClusters))
+	}
 }

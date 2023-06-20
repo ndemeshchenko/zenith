@@ -32,6 +32,30 @@ func randomEventName() string {
 	return eventNames[rand.Intn(len(eventNames))]
 }
 
+func randomEnvName() string {
+	envNames := []string{
+		"Development",
+		"Testing",
+		"Acceptance",
+		"Production",
+	}
+
+	rand.Seed(time.Now().UnixNano())
+	return envNames[rand.Intn(len(envNames))]
+}
+
+func randomClusterName() string {
+	clusterNames := []string{
+		"Awesome",
+		"Fantastic",
+		"Epic",
+		"Magical",
+	}
+
+	rand.Seed(time.Now().UnixNano())
+	return clusterNames[rand.Intn(len(clusterNames))]
+}
+
 // generate output produced by promethues webhook
 func GeneratePrometheusWebhook() (prometheus.WebhookAlertPayload, error) {
 	gofakeit.Seed(time.Now().UnixNano())
@@ -55,9 +79,9 @@ func GenerateWebhookAlertPayloadSubInstance() prometheus.WebhookAlertPayloadSubI
 		Labels: prometheus.WebhookAlertPayloadSubInstanceLabels{
 			Alertname:   randomEventName(),
 			App:         gofakeit.AppName(),
-			Cluster:     gofakeit.AppName(),
+			Cluster:     randomClusterName(),
 			Container:   gofakeit.AppName(),
-			Environment: "development",
+			Environment: randomEnvName(),
 			Namespace:   gofakeit.Animal(),
 			Prometheus:  gofakeit.BeerHop(),
 			Severity:    "critical",

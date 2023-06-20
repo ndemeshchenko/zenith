@@ -66,7 +66,9 @@ func Init(config *config.Config, mongoClient *mongo.Client) {
 		alerts := v1.Group("/alerts")
 		{
 			alerts.GET("", func(c *gin.Context) {
-				alerts, err := alertModel.GetAll(mongoClient)
+				//TODO add more complex query parsing
+				envFilter := c.Query("environment")
+				alerts, err := alertModel.GetAll(envFilter, mongoClient)
 				if err != nil {
 					log.Printf(err.Error())
 				}

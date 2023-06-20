@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	zenithmongo "github.com/ndemeshchenko/zenith/pkg/components/models/alert"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"io"
 	"log"
@@ -45,8 +44,8 @@ func ProcessWebhookAlert(payload io.ReadCloser, mongoClient *mongo.Client) error
 		return nil
 	}
 
-	a, err := alert.Create(mongoClient)
-	log.Println("created alert: ", a.(primitive.ObjectID).Hex(), err)
+	_, err = alert.Create(mongoClient)
+	//log.Println("created alert: ", a.(primitive.ObjectID).Hex(), err)
 	return nil
 }
 

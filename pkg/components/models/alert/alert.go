@@ -10,13 +10,16 @@ import (
 	"log"
 )
 
-func GetAll(mongoClient *mongo.Client) ([]Alert, error) {
+func GetAll(envFilter string, mongoClient *mongo.Client) ([]Alert, error) {
 	// get all alerts from the collection
 	// Access the "alerts" collection
 	collection := mongoClient.Database("zenith").Collection("alerts")
 
 	// Define the filter to find alerts with "status" equal to "open"
 	filter := bson.M{"status": "firing"}
+	if envFilter != "" {
+		filter["environment"] = envFilter
+	}
 
 	findOptions := options.Find()
 	findOptions.SetSort(bson.D{{"severityCode", 1}}).SetLimit(100)
@@ -31,11 +34,6 @@ func GetAll(mongoClient *mongo.Client) ([]Alert, error) {
 			log.Printf("Error closing cursor: %v", err)
 		}
 	}()
-
-	//cursor, err = collection.Find(context.TODO(), filter, findOptions)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
 
 	// Iterate through the results
 	var alerts []Alert
@@ -117,6 +115,25 @@ func UpdateStatus(mongoClient *mongo.Client, id string, action string) error {
 	}
 
 	return nil
+}
+
+func GetDistinctClustersByEnvironment(environment string, mongoClient *mongo.Client) ([]string, error) {
+	collection := mongoClient.Database("zenith").Collection("alerts")
+
+	// Execute the find operation
+	var results []string
+	filter := bson.M{"environment": environment}
+	opts := options.Distinct()
+
+	values, err := collection.Distinct(context.TODO(), "cluster", filter, opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve documents: %v", err)
+	}
+	for _, value := range values {
+		results = append(results, value.(string))
+	}
+
+	return results, nil
 }
 
 func SeverityToLevel(severity string) int8 {
