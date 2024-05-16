@@ -51,6 +51,25 @@ func TestCreateValidPromWebHook(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestCreateEmptyEnvironmentPromWebHook(t *testing.T) {
+	mongoClient, teardown := setupMongo(t)
+	// perform assertions
+	defer teardown(t)
+
+	jsonAlert, _ := prometheusTest.GeneratePrometheusWebhook()
+	jsonAlert.Alerts[0].Labels.Environment = ""
+	jsonString, err := json.Marshal(jsonAlert)
+
+	log.Println(string(jsonString))
+
+	payloadReader := strings.NewReader(string(jsonString))
+	payload := io.NopCloser(payloadReader)
+	err = prometheusWebhook.ProcessWebhookAlert(payload, mongoClient)
+
+	assert.NotNil(t, err)
+	assert.ErrorContains(t, err, "environment is required")
+}
+
 func TestCreateInvalidPromWebHook(t *testing.T) {
 	mongoClient, teardown := setupMongo(t)
 	// perform assertions
