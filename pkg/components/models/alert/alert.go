@@ -10,19 +10,24 @@ import (
 	"log"
 )
 
-func GetAll(envFilter string, mongoClient *mongo.Client) ([]Alert, error) {
+func GetAll(filter bson.M, mongoClient *mongo.Client) ([]Alert, error) {
 	// get all alerts from the collection
 	// Access the "alerts" collection
 	collection := mongoClient.Database("zenith").Collection("alerts")
 
 	// Define the filter to find alerts with "status" equal to "open"
-	filter := bson.M{"status": "firing"}
-	if envFilter != "" {
-		filter["environment"] = envFilter
-	}
+	//filter := bson.M{"status": "firing"}
+	//if envFilter != "" {
+	//	filter["environment"] = envFilter
+	//}
+	//for _, f := range filters {
+	//	log.Printf("filter: %+v", f)
+	//}
 
 	findOptions := options.Find()
-	findOptions.SetSort(bson.D{{"severityCode", 1}}).SetLimit(100)
+	findOptions.
+		SetSort(bson.D{{"severityCode", 1}}).
+		SetLimit(100)
 
 	// Execute the find operation
 	cursor, err := collection.Find(context.Background(), filter, findOptions)

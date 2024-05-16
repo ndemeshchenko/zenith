@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/ndemeshchenko/zenith/pkg/components/api"
 	"github.com/ndemeshchenko/zenith/pkg/components/config"
+	"github.com/ndemeshchenko/zenith/pkg/components/heartbeat"
 	"github.com/ndemeshchenko/zenith/pkg/components/mongo"
 	"go.uber.org/automaxprocs/maxprocs"
 	"log"
@@ -23,6 +24,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	// new Monitor instance
+	monitor := heartbeat.NewMonitor(mongoClient)
+	go monitor.Run()
+
 	//log.Println("authToken: ", appConfig.AuthToken)
 	api.Init(appConfig, mongoClient)
 

@@ -1,0 +1,76 @@
+version: '3.8'
+services:
+  mongodb:
+    image: mongo:latest
+    restart: always
+    logging:
+      driver: none
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: solarwind1234
+      MONGO_INITDB_DATABASE: admin
+    volumes:
+      - ./scripts/docker-compose/mongo-data:/data/db
+      - ./scripts/docker-compose/init-mongo.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    ports:
+      - "27017:27017"
+
+#  zenith-api:
+#    image: ghcr.io/ndemeshchenko/zenith:0.1.8
+#    restart: always
+#    environment:
+#      MONGO_DATABASE: zenith
+#      MONGO_USERNAME: zenith
+#      MONGO_PASSWORD: zenith
+#      MONGO_HOST: mongodb
+#      MONGO_PORT: 27017
+#      AUTH_TOKEN: SUPERTESTENVTOKEN
+#    ports:
+#      - "8080:8080"
+
+#  zenith-local:
+#    build:
+#        context: .
+#        dockerfile: Dockerfile
+#    restart: always
+#    environment:
+#      MONGO_DATABASE: zenith
+#      MONGO_USERNAME: zenith
+#      MONGO_PASSWORD: zenith
+#      MONGO_HOST: mongodb
+#      MONGO_PORT: 27017
+#      AUTH_TOKEN: SUPERTESTENVTOKEN
+#    ports:
+#      - "8080:8080"
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./scripts/docker-compose/prometheuscfg:/etc/prometheus
+      - ./scripts/docker-compose/prometheus-data:/prometheus
+    command: --web.enable-lifecycle  --config.file=/etc/prometheus/prometheus.yml --log.level=debug
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./scripts/docker-compose/alertmanager-data:/data
+      - ./scripts/docker-compose/alertmanagercfg:/config
+
+    command: --config.file=/config/alertmanager.yml --log.level=debug
+
+#volumes:
+#  prometheus-data:
+
+#    image: mongo-express
+#    restart: always
+#    ports:
+#      - 8081:8081
+#    environment:
+#      ME_CONFIG_MONGODB_ADMINUSERNAME: username
+#      ME_CONFIG_MONGODB_ADMINPASSWORD: password
+#      ME_CONFIG_MONGODB_URL: mongodb://username:password@mongodb:27017/

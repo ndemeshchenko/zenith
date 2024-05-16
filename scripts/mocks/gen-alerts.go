@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
-	"io"
-	"log"
 	"net/http"
 	"strings"
 )
 
 func main() {
+	url := "http://localhost:8080/api/webhooks/prometheus"
+	token := "SUPERTESTENVTOKEN"
 	// define slice of string
 	// Define the payload from the example
 	payload1 := `{"receiver":"default-route-receiver","status":"firing","alerts":[{"status":"firing","labels":{"alertname":"PrometheusOperatorSyncFailed","cluster":"dev-gen-de02","container":"kube-prometheus-stack","controller":"alertmanager","endpoint":"http","environment":"Development","instance":"192.168.70.202:8080","job":"kube-prometheus-stack-operator","namespace":"monitoring","pod":"kube-prometheus-stack-operator-7545856747-ld4zj","prometheus":"monitoring/kube-prometheus-stack-prometheus","service":"kube-prometheus-stack-operator","severity":"warning","status":"failed"},"annotations":{"description":"Controller alertmanager in monitoring namespace fails to reconcile 1 objects.","runbook_url":"https://runbooks.prometheus-operator.dev/runbooks/prometheus-operator/prometheusoperatorsyncfailed","summary":"Last controller reconciliation failed"},"startsAt":"2023-05-26T07:13:03.279Z","endsAt":"0001-01-01T00:00:00Z","generatorURL":"https://prometheus.dev.company.io/graph?g0.expr=min_over_time%28prometheus_operator_syncs%7Bjob%3D%22kube-prometheus-stack-operator%22%2Cnamespace%3D%22monitoring%22%2Cstatus%3D%22failed%22%7D%5B5m%5D%29+%3E+0&g0.tab=1","fingerprint":"b6f2cc7bceec39bc"}],"groupLabels":{"alertname":"PrometheusOperatorSyncFailed"},"commonLabels":{"alertname":"PrometheusOperatorSyncFailed","cluster":"dev-gen-de02","container":"kube-prometheus-stack","controller":"alertmanager","endpoint":"http","environment":"Development","instance":"192.168.70.202:8080","job":"kube-prometheus-stack-operator","namespace":"monitoring","pod":"kube-prometheus-stack-operator-7545856747-ld4zj","prometheus":"monitoring/kube-prometheus-stack-prometheus","service":"kube-prometheus-stack-operator","severity":"warning","status":"failed"},"commonAnnotations":{"description":"Controller alertmanager in monitoring namespace fails to reconcile 1 objects.","runbook_url":"https://runbooks.prometheus-operator.dev/runbooks/prometheus-operator/prometheusoperatorsyncfailed","summary":"Last controller reconciliation failed"},"externalURL":"https://alertmanager.dev.company.io","version":"4","groupKey":"{}:{alertname=\"PrometheusOperatorSyncFailed\"}","truncatedAlerts":0}`
@@ -22,16 +22,26 @@ func main() {
 	var alertPayloads = []string{payload1, payload2, payload3, payload4}
 
 	for _, value := range alertPayloads {
-		// Make the POST request
-		resp, err := http.Post("http://localhost:8080/api/webhooks/prometheus", "application/json", strings.NewReader(value))
+		// Make the POST request with bearer auth token SUPERTESTENVTOKEN
+
+		//resp, err := http.Post("http://localhost:8080/api/webhooks/prometheus", "application/json", strings.NewReader(value))
+
+		req, err := http.NewRequest("POST", url, strings.NewReader(value))
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println("Error creating HTTP request:", err)
+			return
 		}
 
-		body, _ := io.ReadAll(resp.Body)
-		fmt.Println(resp.Status, string(body))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+token)
 
-		resp.Body.Close()
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Println("Error making HTTP request:", err)
+			return
+		}
+		defer resp.Body.Close()
 	}
 
 }
