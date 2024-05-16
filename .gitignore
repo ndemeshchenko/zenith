@@ -20,7 +20,8 @@
 # Go workspace file
 go.work
 
-.idea
+.idea/
+.run/
 .vscode
 scripts/docker-compose/data
 scripts/docker-compose/prometheus-data
