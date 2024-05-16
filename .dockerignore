@@ -1,0 +1,28 @@
+# Ignore build artifacts
+bin/
+obj/
+*.o
+*.a
+
+# Ignore source control directories
+.git/
+.svn/
+
+# Ignore editor and IDE files
+.vscode/
+.idea/
+
+# Ignore test and coverage files
+test/
+coverage/
+
+# Ignore OS and architecture-specific files
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Ignore development files
+.dockerignore
+Dockerfile
+docker-compose.yml

@@ -22,4 +22,7 @@ go.work
 
 .idea
 .vscode
-scripts/mongo/data
+scripts/docker-compose/data
+scripts/docker-compose/prometheus-data
+scripts/docker-compose/mongo-data
+kubernetes/**
