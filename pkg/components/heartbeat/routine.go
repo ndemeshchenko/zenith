@@ -3,9 +3,10 @@ package heartbeat
 import (
 	"context"
 	"fmt"
-	zenithmongo "github.com/ndemeshchenko/zenith/pkg/components/models/alert"
 	"log"
 	"time"
+
+	zenithmongo "github.com/ndemeshchenko/zenith/pkg/components/models/alert"
 
 	"github.com/ndemeshchenko/zenith/pkg/components/models/heartbeat"
 	"go.mongodb.org/mongo-driver/bson"
