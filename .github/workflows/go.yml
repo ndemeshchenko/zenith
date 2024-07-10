@@ -58,6 +58,10 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
+      - name: Display Branch Name
+        run: |
+          echo "Current Branch: ${{ github.ref }}"
+
       - name: Extract and sanitize branch name
         id: extract_branch
         run: |
