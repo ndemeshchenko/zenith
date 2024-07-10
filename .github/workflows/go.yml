@@ -62,6 +62,8 @@ jobs:
         run: |
           echo "To get source branch Name : ${{github.ref_name}}"
           echo "For Target branch Name : ${{github.event.pull_request.base.ref}}"
+          echo "${{ github.head_ref || github.ref_name }}"
+          echo "base ref : ${{ github.base_ref }}"
 
       - name: Extract and sanitize branch name
         id: extract_branch
