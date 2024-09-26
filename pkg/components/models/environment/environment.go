@@ -17,10 +17,10 @@ func GetAll(mongoClient *mongo.Client) ([]Environment, error) {
 	// TODO this is a mock
 	// TODO implement fetch from DB
 	mockEnv := []Environment{
-		{Name: "Development"},
-		{Name: "Testing"},
-		{Name: "Acceptance"},
-		{Name: "Production"},
+		{Name: "dev"},
+		{Name: "test"},
+		{Name: "acc"},
+		{Name: "prod"},
 	}
 	type Result struct {
 		ID    string `bson:"_id"`
