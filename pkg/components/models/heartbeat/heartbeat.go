@@ -111,8 +111,10 @@ func (heartbeatEvent *Heartbeat) Create(c *mongo.Client) (interface{}, error) {
 	opts := options.Update().SetUpsert(true)
 	result, err := collection.UpdateOne(context.TODO(), filter, update, opts)
 
-	log.Printf("Number of documents updated: %v\n", result.ModifiedCount)
-	log.Printf("Number of documents upserted: %v\n", result.UpsertedCount)
+	if result != nil {
+		log.Printf("Number of documents updated: %v\n", result.ModifiedCount)
+		log.Printf("Number of documents upserted: %v\n", result.UpsertedCount)
+	}
 
 	// Upsert the heartbeat into the collection
 	//one, err := collection.UpdateOne(context.Background(), heartbeatEvent, heartbeatEvent)
