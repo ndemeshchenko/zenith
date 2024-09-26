@@ -1,20 +1,28 @@
-FROM golang:1.19.3 as base
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.20.5-alpine AS build
+#ARG GO_VERSION
+ARG BUILDPLATFORM
+ARG TARGETPLATFORM
+ARG TARGETOS
+ARG TARGETARCH
 
 WORKDIR /app
 
 COPY go.mod ./
 
-RUN go mod download
-RUN go mod verify
+RUN --mount=type=cache,target=/go/pkg/mod \
+    apk add --no-cache git ca-certificates && \
+    go mod download && \
+    go mod verify
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o /main ./cmd/zenithd
+RUN --mount=readonly,target=. --mount=type=cache,target=/go/pkg/mod \
+    GOOS=${TARGETOS} GOARCH=${TARGETARCH} CGO_ENABLED=0 go build -a -o /main -ldflags '-w -extldflags "-static"' ./cmd/zenithd
 
-FROM gcr.io/distroless/static-debian11
 
-COPY --from=base /main .
+FROM --platform=${TARGETPLATFORM:-linux/amd64} gcr.io/distroless/static-debian11
 
-#USER small-user:small-user
+COPY --from=build /main .
+
 EXPOSE 8080
 CMD ["./main"]

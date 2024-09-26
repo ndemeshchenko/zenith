@@ -7,7 +7,9 @@ import (
 	"github.com/ndemeshchenko/zenith/pkg/components/config"
 	alertModel "github.com/ndemeshchenko/zenith/pkg/components/models/alert"
 	"github.com/ndemeshchenko/zenith/pkg/components/models/environment"
+	heartbeatModel "github.com/ndemeshchenko/zenith/pkg/components/models/heartbeat"
 	prometheusWebhook "github.com/ndemeshchenko/zenith/pkg/components/webhooks/prometheus"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"log"
 	"net/http"
@@ -52,6 +54,7 @@ func Init(config *config.Config, mongoClient *mongo.Client) {
 			webhooks.POST("/prometheus", func(c *gin.Context) {
 				err := prometheusWebhook.ProcessWebhookAlert(c.Request.Body, mongoClient)
 				if err != nil {
+					log.Println(err.Error())
 					c.JSON(http.StatusInternalServerError, gin.H{
 						"error": err.Error(),
 					})
@@ -67,12 +70,32 @@ func Init(config *config.Config, mongoClient *mongo.Client) {
 		{
 			alerts.GET("", func(c *gin.Context) {
 				//TODO add more complex query parsing
+				filter := bson.M{
+					"status": "firing",
+					"type":   bson.M{"$ne": "heartbeat"},
+				}
 				envFilter := c.Query("environment")
-				alerts, err := alertModel.GetAll(envFilter, mongoClient)
+				if envFilter != "" {
+					filter["environment"] = envFilter
+				}
+
+				alerts, err := alertModel.GetAll(filter, mongoClient)
 				if err != nil {
 					log.Printf(err.Error())
 				}
 				c.JSON(http.StatusOK, alerts)
+			})
+		}
+
+		heartbeats := v1.Group("/heartbeats")
+		{
+			heartbeats.GET("", func(c *gin.Context) {
+				filter := bson.M{}
+				heartbeats, err := heartbeatModel.GetAll(filter, mongoClient)
+				if err != nil {
+					log.Printf(err.Error())
+				}
+				c.JSON(http.StatusOK, heartbeats)
 			})
 		}
 
@@ -118,7 +141,6 @@ func Init(config *config.Config, mongoClient *mongo.Client) {
 			})
 		}
 	}
-
 	router.Run("0.0.0.0:8080")
 }
 

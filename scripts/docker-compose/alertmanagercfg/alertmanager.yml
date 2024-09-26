@@ -1,0 +1,30 @@
+global:
+  resolve_timeout: 5m
+
+
+route:
+  receiver: default-route-receiver
+  group_by:
+    - '...'
+  continue: false
+#  routes:
+#    - receiver: empty
+#      match:
+#        alertname: Watchdog
+#      continue: false
+  group_wait: 1m
+  group_interval: 1m
+  repeat_interval: 1m
+receivers:
+  - name: empty
+  - name: default-route-receiver
+    webhook_configs:
+      - send_resolved: true
+        http_config:
+          authorization:
+            type: Bearer
+            credentials: SUPERTESTENVTOKEN
+          follow_redirects: true
+          enable_http2: true
+        url: http://host.docker.internal:8080/api/webhooks/prometheus
+        max_alerts: 0

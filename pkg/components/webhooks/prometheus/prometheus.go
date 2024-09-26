@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	zenithmongo "github.com/ndemeshchenko/zenith/pkg/components/models/alert"
+	"github.com/ndemeshchenko/zenith/pkg/components/models/heartbeat"
 	"go.mongodb.org/mongo-driver/mongo"
 	"io"
 	"log"
@@ -17,6 +18,8 @@ func ProcessWebhookAlert(payload io.ReadCloser, mongoClient *mongo.Client) error
 		return err
 	}
 
+	log.Println("received alert: ", string(jsonData))
+
 	var webhookAlertPayload WebhookAlertPayload
 	err = json.Unmarshal(jsonData, &webhookAlertPayload)
 	if err != nil {
@@ -26,7 +29,23 @@ func ProcessWebhookAlert(payload io.ReadCloser, mongoClient *mongo.Client) error
 
 	alert, err := transformWebhookAlert(webhookAlertPayload)
 	if err != nil {
-		fmt.Errorf("failed to transform alert: %v", err)
+		_ = fmt.Errorf("failed to transform alert: %v", err)
+		return err
+	}
+
+	if alert.Event == "Watchdog" {
+
+		log.Printf("received watchdog alert for cluster %+v", alert)
+		// create heartbeatEvent event
+		heartbeatEvent := heartbeat.Heartbeat{
+			Cluster:        alert.Cluster,
+			Environment:    alert.Environment,
+			Fingerprint:    fmt.Sprintf("heartbeat_%s_%s", alert.Environment, alert.Cluster),
+			LastReceivedAt: time.Now(),
+		}
+
+		_, err = heartbeatEvent.Create(mongoClient)
+
 		return err
 	}
 
@@ -45,8 +64,7 @@ func ProcessWebhookAlert(payload io.ReadCloser, mongoClient *mongo.Client) error
 	}
 
 	_, err = alert.Create(mongoClient)
-	//log.Println("created alert: ", a.(primitive.ObjectID).Hex(), err)
-	return nil
+	return err
 }
 
 func transformWebhookAlert(wap WebhookAlertPayload) (zenithmongo.Alert, error) {

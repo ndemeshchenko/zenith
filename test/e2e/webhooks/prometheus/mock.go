@@ -56,7 +56,7 @@ func randomClusterName() string {
 	return clusterNames[rand.Intn(len(clusterNames))]
 }
 
-// generate output produced by promethues webhook
+// GeneratePrometheusWebhook generate output produced by prometheus webhook
 func GeneratePrometheusWebhook() (prometheus.WebhookAlertPayload, error) {
 	gofakeit.Seed(time.Now().UnixNano())
 

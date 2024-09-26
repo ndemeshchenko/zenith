@@ -7,13 +7,15 @@ import (
 )
 
 type Config struct {
-	MongoHost     string
-	MongoPort     string
-	MongoDatabase string
-	MongoUsername string
-	MongoPassword string
-	Debug         bool
-	AuthToken     string
+	MongoHost          string
+	MongoPort          string
+	MongoDatabase      string
+	MongoUsername      string
+	MongoPassword      string
+	MongoTLS           bool
+	MongoAuthMechanism string
+	Debug              bool
+	AuthToken          string
 }
 
 func InitConfigurations() *Config {
@@ -41,6 +43,13 @@ func InitConfigurations() *Config {
 		mongoPassword = "zenith"
 	}
 
+	mongoTLS := os.Getenv("MONGO_TLS")
+	if mongoTLS == "" {
+		mongoTLS = "false"
+	}
+
+	mongoAuthMechanism := os.Getenv("MONGO_AUTH_MECHANISM")
+
 	debug := false
 	if os.Getenv("DEBUG") == "true" {
 		debug = true
@@ -54,13 +63,14 @@ func InitConfigurations() *Config {
 	}
 
 	return &Config{
-		MongoHost:     mongoHost,
-		MongoPort:     mongoPort,
-		MongoDatabase: mongoDatabse,
-		MongoUsername: mongoUsername,
-		MongoPassword: mongoPassword,
-		Debug:         debug,
-		AuthToken:     authToken,
+		MongoHost:          mongoHost,
+		MongoPort:          mongoPort,
+		MongoDatabase:      mongoDatabse,
+		MongoUsername:      mongoUsername,
+		MongoPassword:      mongoPassword,
+		MongoAuthMechanism: mongoAuthMechanism,
+		Debug:              debug,
+		AuthToken:          authToken,
 	}
 
 }
