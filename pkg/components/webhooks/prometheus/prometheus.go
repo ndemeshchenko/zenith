@@ -9,6 +9,7 @@ import (
 	"github.com/ndemeshchenko/zenith/pkg/components/models/heartbeat"
 	"go.mongodb.org/mongo-driver/mongo"
 	"io"
+	"log/slog"
 	"time"
 )
 
@@ -18,7 +19,7 @@ func ProcessWebhookAlert(payload io.ReadCloser, mongoClient *mongo.Client) error
 		return err
 	}
 
-	l.Logger.Debug("received alert: ", string(jsonData))
+	l.Logger.Debug("received", slog.String("alert", string(jsonData)))
 
 	var webhookAlertPayload WebhookAlertPayload
 	err = json.Unmarshal(jsonData, &webhookAlertPayload)
@@ -35,7 +36,7 @@ func ProcessWebhookAlert(payload io.ReadCloser, mongoClient *mongo.Client) error
 
 	if alert.Event == "Watchdog" {
 
-		l.Logger.Debug("received watchdog alert for cluster %+v", alert)
+		l.Logger.Debug("received", slog.Any("watchdog alert", alert))
 		// create heartbeatEvent event
 		heartbeatEvent := heartbeat.Heartbeat{
 			Cluster:        alert.Cluster,

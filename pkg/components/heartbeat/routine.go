@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	l "github.com/ndemeshchenko/zenith/pkg/components/logger"
+	"log/slog"
 	"time"
 
 	zenithmongo "github.com/ndemeshchenko/zenith/pkg/components/models/alert"
@@ -35,9 +36,9 @@ func (m *Monitor) Run() {
 
 		heartbeats := m.fetchHeartbeats()
 		l.Logger.Info("Running heartbeats monitor routine")
-		l.Logger.Debug("heartbeats: ", heartbeats)
+		l.Logger.Debug("heartbeats", slog.Any("list", heartbeats))
 		for _, heartbeatEvent := range heartbeats {
-			l.Logger.Debug("heartbeatEvent: %+v", heartbeatEvent)
+			l.Logger.Debug("heartbeat", slog.Any("event", heartbeatEvent))
 			if !heartbeatEvent.LastReceivedAt.Before(time.Now().UTC().Add(-5 * time.Minute)) {
 				//TODO find by fingerprint and delete alert
 				alert, err := zenithmongo.FindByFingerprint(m.MongoClient, fmt.Sprintf("heartbeat_%s_%s", heartbeatEvent.Environment, heartbeatEvent.Cluster))
@@ -45,7 +46,7 @@ func (m *Monitor) Run() {
 					l.Logger.Debug("failed to find alert for cluster %s: %v", heartbeatEvent.Cluster, err)
 				}
 				if alert == nil {
-					l.Logger.Debug("alert for cluster %s not found", heartbeatEvent.Cluster)
+					l.Logger.Debug("not found", slog.String("alert", heartbeatEvent.Cluster))
 					continue
 				}
 				err = alert.Delete(m.MongoClient)
@@ -54,9 +55,9 @@ func (m *Monitor) Run() {
 				}
 
 			} else {
-				l.Logger.Debug("heartbeatEvent is older than 5 minutes: ", heartbeatEvent)
+				l.Logger.Debug("heartbeatEvent is older than 5 minutes", slog.Any("event", heartbeatEvent))
 				// create alert
-				l.Logger.Debug("create alert for cluster %s", heartbeatEvent.Cluster)
+				l.Logger.Debug("create alert", slog.String("cluster", heartbeatEvent.Cluster))
 				alert := zenithmongo.Alert{
 					Resource:     heartbeatEvent.Cluster,
 					Event:        "Heartbeat",

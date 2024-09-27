@@ -8,11 +8,12 @@ import (
 	l "github.com/ndemeshchenko/zenith/pkg/components/logger"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"log/slog"
 )
 
 func InitDBConnection(config *config.Config) (*mongo.Client, error) {
 	mongoDatasource := fmt.Sprintf("mongodb://%s:%s", config.MongoHost, config.MongoPort)
-	l.Logger.Info("connecting to mongodb:", mongoDatasource)
+	l.Logger.Info("connecting to mongodb", slog.String("datasource", mongoDatasource))
 
 	clientCredentials := options.Credential{
 		Username:   config.MongoUsername,
