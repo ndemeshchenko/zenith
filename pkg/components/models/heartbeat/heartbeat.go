@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/ndemeshchenko/zenith/pkg/components/logger"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -66,7 +67,7 @@ func GetAll(filter bson.M, mongoClient *mongo.Client) ([]Heartbeat, error) {
 	}
 	defer func() {
 		if err := cursor.Close(context.Background()); err != nil {
-			log.Printf("Error closing cursor: %v", err)
+			logger.Logger.Error("Error closing cursor: %v", err)
 		}
 	}()
 
@@ -112,8 +113,8 @@ func (heartbeatEvent *Heartbeat) Create(c *mongo.Client) (interface{}, error) {
 	result, err := collection.UpdateOne(context.TODO(), filter, update, opts)
 
 	if result != nil {
-		log.Printf("Number of documents updated: %v\n", result.ModifiedCount)
-		log.Printf("Number of documents upserted: %v\n", result.UpsertedCount)
+		logger.Logger.Debug("Number of documents updated: %v\n", result.ModifiedCount)
+		logger.Logger.Debug("Number of documents upserted: %v\n", result.UpsertedCount)
 	}
 
 	// Upsert the heartbeat into the collection

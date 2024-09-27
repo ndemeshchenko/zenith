@@ -5,14 +5,14 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/ndemeshchenko/zenith/pkg/components/config"
+	l "github.com/ndemeshchenko/zenith/pkg/components/logger"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"log"
 )
 
 func InitDBConnection(config *config.Config) (*mongo.Client, error) {
 	mongoDatasource := fmt.Sprintf("mongodb://%s:%s", config.MongoHost, config.MongoPort)
-	fmt.Println("Connecting to MongoDB: ", mongoDatasource)
+	l.Logger.Info("connecting to mongodb:", mongoDatasource)
 
 	clientCredentials := options.Credential{
 		Username:   config.MongoUsername,
@@ -24,7 +24,8 @@ func InitDBConnection(config *config.Config) (*mongo.Client, error) {
 	}
 
 	clientOptions := options.Client().ApplyURI(mongoDatasource).
-		SetAuth(clientCredentials).SetTLSConfig(&tls.Config{})
+		SetAuth(clientCredentials).SetTLSConfig(&tls.Config{}).
+		SetRetryWrites(false)
 
 	// Connect to MongoDB
 	client, err := mongo.Connect(context.Background(), clientOptions)
@@ -38,6 +39,6 @@ func InitDBConnection(config *config.Config) (*mongo.Client, error) {
 		return nil, err
 	}
 
-	log.Println("Connected to MongoDB!")
+	l.Logger.Info("connected to mongodb")
 	return client, nil
 }

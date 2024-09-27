@@ -5,22 +5,20 @@ import (
 	"github.com/ndemeshchenko/zenith/pkg/components/api"
 	"github.com/ndemeshchenko/zenith/pkg/components/config"
 	"github.com/ndemeshchenko/zenith/pkg/components/heartbeat"
+	l "github.com/ndemeshchenko/zenith/pkg/components/logger"
 	"github.com/ndemeshchenko/zenith/pkg/components/mongo"
 	mongo2 "go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/automaxprocs/maxprocs"
-	"log"
 )
 
 func main() {
-	log.Println("Starting Zenithd")
 	// set GOMAXPROCS
 	_, _ = maxprocs.Set()
-
-	log.SetFlags(log.Ldate | log.Lshortfile)
-	log.Println("Initializing configurations")
 	appConfig := config.InitConfigurations()
+	logLevel := appConfig.LogLevel
+	l.Init(logLevel, nil)
 
-	log.Println("Initializing MongoDB connection")
+	l.Logger.Info("initializing MongoDB connection")
 	mongoClient, err := mongo.InitDBConnection(appConfig)
 	if err != nil {
 		panic(err)
@@ -30,7 +28,7 @@ func main() {
 	monitor := heartbeat.NewMonitor(mongoClient)
 	go monitor.Run()
 
-	//log.Println("authToken: ", appConfig.AuthToken)
+	l.Logger.Info("starting Zenithd")
 	api.Init(appConfig, mongoClient)
 
 	defer func(mongoClient *mongo2.Client, ctx context.Context) {

@@ -2,10 +2,9 @@ package environment
 
 import (
 	"context"
-	"fmt"
+	l "github.com/ndemeshchenko/zenith/pkg/components/logger"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"log"
 )
 
 type Environment struct {
@@ -41,7 +40,7 @@ func GetAll(mongoClient *mongo.Client) ([]Environment, error) {
 	// Execute the aggregation query
 	cursor, err := collection.Aggregate(context.Background(), pipeline)
 	if err != nil {
-		log.Println("Failed to execute aggregation query:", err)
+		l.Logger.Error("Failed to execute aggregation query:", err)
 		return nil, err
 	}
 	defer cursor.Close(context.Background())
@@ -49,7 +48,7 @@ func GetAll(mongoClient *mongo.Client) ([]Environment, error) {
 	// Iterate over the results
 	var results []Result
 	if err := cursor.All(context.Background(), &results); err != nil {
-		fmt.Println("Failed to decode aggregation results:", err)
+		l.Logger.Error("Failed to decode aggregation results:", err)
 		return nil, err
 	}
 	for _, result := range results {
