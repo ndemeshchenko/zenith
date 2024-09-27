@@ -5,18 +5,18 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/ndemeshchenko/zenith/pkg/components/config"
+	l "github.com/ndemeshchenko/zenith/pkg/components/logger"
 	alertModel "github.com/ndemeshchenko/zenith/pkg/components/models/alert"
 	"github.com/ndemeshchenko/zenith/pkg/components/models/environment"
 	heartbeatModel "github.com/ndemeshchenko/zenith/pkg/components/models/heartbeat"
 	prometheusWebhook "github.com/ndemeshchenko/zenith/pkg/components/webhooks/prometheus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"log"
 	"net/http"
 )
 
 func Init(config *config.Config, mongoClient *mongo.Client) {
-	if !config.Debug {
+	if config.LogLevel != "debug" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	router := gin.Default()
@@ -54,7 +54,7 @@ func Init(config *config.Config, mongoClient *mongo.Client) {
 			webhooks.POST("/prometheus", func(c *gin.Context) {
 				err := prometheusWebhook.ProcessWebhookAlert(c.Request.Body, mongoClient)
 				if err != nil {
-					log.Println(err.Error())
+					l.Logger.Error(err.Error())
 					c.JSON(http.StatusInternalServerError, gin.H{
 						"error": err.Error(),
 					})
@@ -81,7 +81,7 @@ func Init(config *config.Config, mongoClient *mongo.Client) {
 
 				alerts, err := alertModel.GetAll(filter, mongoClient)
 				if err != nil {
-					log.Printf(err.Error())
+					l.Logger.Error(err.Error())
 				}
 				c.JSON(http.StatusOK, alerts)
 			})
@@ -93,7 +93,7 @@ func Init(config *config.Config, mongoClient *mongo.Client) {
 				filter := bson.M{}
 				heartbeats, err := heartbeatModel.GetAll(filter, mongoClient)
 				if err != nil {
-					log.Printf(err.Error())
+					l.Logger.Error(err.Error())
 				}
 				c.JSON(http.StatusOK, heartbeats)
 			})
@@ -104,7 +104,7 @@ func Init(config *config.Config, mongoClient *mongo.Client) {
 			alert.GET("/:id", func(c *gin.Context) {
 				alert, err := alertModel.GetOne(mongoClient, c.Param("id"))
 				if err != nil {
-					log.Printf(err.Error())
+					l.Logger.Error(err.Error())
 				}
 				c.JSON(http.StatusOK, alert)
 			})
@@ -113,7 +113,7 @@ func Init(config *config.Config, mongoClient *mongo.Client) {
 				action := c.Query("action")
 				err := alertModel.UpdateStatus(mongoClient, c.Param("id"), action)
 				if err != nil {
-					log.Printf(err.Error())
+					l.Logger.Error(err.Error())
 				}
 				c.JSON(http.StatusOK, gin.H{
 					"status": "patched",
@@ -122,7 +122,7 @@ func Init(config *config.Config, mongoClient *mongo.Client) {
 			alert.DELETE("/:id", func(c *gin.Context) {
 				err := alertModel.DeleteOne(mongoClient, c.Param("id"))
 				if err != nil {
-					log.Printf(err.Error())
+					l.Logger.Error(err.Error())
 				}
 				c.JSON(http.StatusOK, gin.H{
 					"status": "deleted",
@@ -135,20 +135,19 @@ func Init(config *config.Config, mongoClient *mongo.Client) {
 			environments.GET("", func(c *gin.Context) {
 				environments, err := environment.GetAll(mongoClient)
 				if err != nil {
-					fmt.Printf(err.Error())
+					l.Logger.Error(err.Error())
 				}
 				c.JSON(http.StatusOK, environments)
 			})
 		}
 	}
-	router.Run("0.0.0.0:8080")
+	_ = router.Run("0.0.0.0:8080")
 }
 
 // TokenAuthMiddleware Super simple auth middleware just to cover the basics
 func TokenAuthMiddleware(token string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authToken := c.GetHeader("Authorization")
-		//log.Println("Authorization: Bearer ", authToken)
 		if authToken != fmt.Sprintf("Bearer %s", token) {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error": "Unauthorized",

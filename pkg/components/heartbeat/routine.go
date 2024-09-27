@@ -3,7 +3,8 @@ package heartbeat
 import (
 	"context"
 	"fmt"
-	"log"
+	l "github.com/ndemeshchenko/zenith/pkg/components/logger"
+	"log/slog"
 	"time"
 
 	zenithmongo "github.com/ndemeshchenko/zenith/pkg/components/models/alert"
@@ -28,36 +29,35 @@ func NewMonitor(mongoClient *mongo.Client) *Monitor {
 func (m *Monitor) Run() {
 	for {
 		// print date in YYYY-MM-DD HH:MM:SS format
-		fmt.Println(time.Now().Format("2006-01-02 15:04:05"))
 		time.Sleep(30 * time.Second)
 
 		// read all records from heartbeats collection
 		// check whether any has LastReceivedAt older than 5 minutes
 
 		heartbeats := m.fetchHeartbeats()
-		log.Println("heartbeats: ", heartbeats)
+		l.Logger.Info("Running heartbeats monitor routine")
+		l.Logger.Debug("heartbeats", slog.Any("list", heartbeats))
 		for _, heartbeatEvent := range heartbeats {
-			log.Printf("heartbeatEvent: %+v", heartbeatEvent)
-			if !heartbeatEvent.LastReceivedAt.Before(time.Now().Add(-5 * time.Minute)) {
+			l.Logger.Debug("heartbeat", slog.Any("event", heartbeatEvent))
+			if !heartbeatEvent.LastReceivedAt.Before(time.Now().UTC().Add(-5 * time.Minute)) {
 				//TODO find by fingerprint and delete alert
-				log.Printf("delete alert for cluster %s", heartbeatEvent.Cluster)
 				alert, err := zenithmongo.FindByFingerprint(m.MongoClient, fmt.Sprintf("heartbeat_%s_%s", heartbeatEvent.Environment, heartbeatEvent.Cluster))
 				if err != nil {
-					log.Printf("failed to find alert for cluster %s: %v", heartbeatEvent.Cluster, err)
+					l.Logger.Debug("failed to find alert for cluster %s: %v", heartbeatEvent.Cluster, err)
 				}
 				if alert == nil {
-					log.Printf("alert for cluster %s not found", heartbeatEvent.Cluster)
+					l.Logger.Debug("not found", slog.String("alert", heartbeatEvent.Cluster))
 					continue
 				}
 				err = alert.Delete(m.MongoClient)
 				if err != nil {
-					log.Printf("failed to delete alert for cluster %s: %v", heartbeatEvent.Cluster, err)
+					l.Logger.Error("failed to delete alert for cluster %s: %v", heartbeatEvent.Cluster, err)
 				}
 
 			} else {
-				log.Println("heartbeatEvent is older than 5 minutes: ", heartbeatEvent)
+				l.Logger.Debug("heartbeatEvent is older than 5 minutes", slog.Any("event", heartbeatEvent))
 				// create alert
-				log.Printf("create alert for cluster %s", heartbeatEvent.Cluster)
+				l.Logger.Debug("create alert", slog.String("cluster", heartbeatEvent.Cluster))
 				alert := zenithmongo.Alert{
 					Resource:     heartbeatEvent.Cluster,
 					Event:        "Heartbeat",
@@ -73,7 +73,7 @@ func (m *Monitor) Run() {
 				}
 				_, err := alert.Upsert(m.MongoClient)
 				if err != nil {
-					log.Printf("failed to create alert for cluster %s: %v", heartbeatEvent.Cluster, err)
+					l.Logger.Error("failed to create alert for cluster %s: %v", heartbeatEvent.Cluster, err)
 				}
 			}
 		}
@@ -88,12 +88,12 @@ func (m *Monitor) fetchHeartbeats() []heartbeat.Heartbeat {
 
 	cursor, err := collection.Find(context.Background(), bson.D{})
 	if err != nil {
-		log.Printf("Error finding documents: %v", err)
+		l.Logger.Error("Error finding documents: %v", err)
 	}
 
 	defer func() {
 		if err := cursor.Close(context.Background()); err != nil {
-			log.Printf("Error closing cursor: %v\n", err)
+			l.Logger.Error("Error closing cursor: %v\n", err)
 		}
 	}()
 
@@ -102,18 +102,18 @@ func (m *Monitor) fetchHeartbeats() []heartbeat.Heartbeat {
 		var heartbeatEvent heartbeat.Heartbeat
 		err := cursor.Decode(&heartbeatEvent)
 		if err != nil {
-			log.Printf("Error decoding document: %v", err)
+			l.Logger.Error("Error decoding document: %v", err)
 		}
 		heartbeats = append(heartbeats, heartbeatEvent)
 	}
 
 	if err := cursor.Err(); err != nil {
-		log.Printf("Error iterating cursor: %v", err)
+		l.Logger.Error("Error iterating cursor: %v", err)
 	}
 
 	err = cursor.Close(context.Background())
 	if err != nil {
-		log.Printf("Error closing cursor: %v", err)
+		l.Logger.Error("Error closing cursor: %v", err)
 	}
 
 	return heartbeats

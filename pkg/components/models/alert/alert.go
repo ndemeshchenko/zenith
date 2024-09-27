@@ -3,6 +3,7 @@ package alert
 import (
 	"context"
 	"fmt"
+	l "github.com/ndemeshchenko/zenith/pkg/components/logger"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -36,7 +37,7 @@ func GetAll(filter bson.M, mongoClient *mongo.Client) ([]Alert, error) {
 	}
 	defer func() {
 		if err := cursor.Close(context.Background()); err != nil {
-			log.Printf("Error closing cursor: %v", err)
+			l.Logger.Error("Error closing cursor: %v", err)
 		}
 	}()
 
@@ -79,9 +80,18 @@ func GetOne(mongoClient *mongo.Client, id string) (*Alert, error) {
 func FindByFingerprint(mongoClient *mongo.Client, fingerprint string) (*Alert, error) {
 	collection := mongoClient.Database("zenith").Collection("alerts")
 
+	count, err := collection.CountDocuments(context.Background(), bson.M{"fingerprint": fingerprint})
+	if err != nil {
+		return nil, err
+	}
+
+	if count == 0 {
+		return nil, nil
+	}
+
 	// Execute the find operation
 	var result Alert
-	err := collection.FindOne(context.Background(), bson.M{"fingerprint": fingerprint}).Decode(&result)
+	err = collection.FindOne(context.Background(), bson.M{"fingerprint": fingerprint}).Decode(&result)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve documents: %v", err)
 	}

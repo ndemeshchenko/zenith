@@ -1,8 +1,8 @@
 package config
 
 import (
+	"crypto/rand"
 	"fmt"
-	"math/rand"
 	"os"
 )
 
@@ -14,7 +14,7 @@ type Config struct {
 	MongoPassword      string
 	MongoTLS           bool
 	MongoAuthMechanism string
-	Debug              bool
+	LogLevel           string
 	AuthToken          string
 }
 
@@ -50,15 +50,18 @@ func InitConfigurations() *Config {
 
 	mongoAuthMechanism := os.Getenv("MONGO_AUTH_MECHANISM")
 
-	debug := false
-	if os.Getenv("DEBUG") == "true" {
-		debug = true
+	logLevel := "info"
+	if os.Getenv("LOG_LEVEL") == "debug" {
+		logLevel = "debug"
+	}
+	if os.Getenv("LOG_LEVEL") == "trace" {
+		logLevel = "trace"
 	}
 
 	authToken := os.Getenv("AUTH_TOKEN")
 	if authToken == "" {
 		b := make([]byte, 32)
-		rand.Read(b)
+		_, _ = rand.Read(b)
 		authToken = fmt.Sprintf("%x", b)
 	}
 
@@ -69,7 +72,7 @@ func InitConfigurations() *Config {
 		MongoUsername:      mongoUsername,
 		MongoPassword:      mongoPassword,
 		MongoAuthMechanism: mongoAuthMechanism,
-		Debug:              debug,
+		LogLevel:           logLevel,
 		AuthToken:          authToken,
 	}
 
