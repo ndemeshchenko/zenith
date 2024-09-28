@@ -25,8 +25,11 @@ func InitDBConnection(config *config.Config) (*mongo.Client, error) {
 	}
 
 	clientOptions := options.Client().ApplyURI(mongoDatasource).
-		SetAuth(clientCredentials).SetTLSConfig(&tls.Config{}).
-		SetRetryWrites(false)
+		SetAuth(clientCredentials).SetRetryWrites(false)
+
+	if config.MongoTLS {
+		clientOptions.SetTLSConfig(&tls.Config{})
+	}
 
 	// Connect to MongoDB
 	client, err := mongo.Connect(context.Background(), clientOptions)

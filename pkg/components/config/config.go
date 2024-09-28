@@ -43,9 +43,10 @@ func InitConfigurations() *Config {
 		mongoPassword = "zenith"
 	}
 
-	mongoTLS := os.Getenv("MONGO_TLS")
-	if mongoTLS == "" {
-		mongoTLS = "false"
+	mongoTLS := true
+	mongoTLSParam := os.Getenv("MONGO_TLS")
+	if mongoTLSParam == "false" {
+		mongoTLS = false
 	}
 
 	mongoAuthMechanism := os.Getenv("MONGO_AUTH_MECHANISM")
@@ -74,6 +75,7 @@ func InitConfigurations() *Config {
 		MongoAuthMechanism: mongoAuthMechanism,
 		LogLevel:           logLevel,
 		AuthToken:          authToken,
+		MongoTLS:           mongoTLS,
 	}
 
 }
