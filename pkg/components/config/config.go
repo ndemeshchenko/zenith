@@ -28,9 +28,9 @@ func InitConfigurations() *Config {
 	if mongoPort == "" {
 		mongoPort = "27017"
 	}
-	mongoDatabse := os.Getenv("MONGO_DATABASE")
-	if mongoDatabse == "" {
-		mongoDatabse = "zenith"
+	mongoDatabase := os.Getenv("MONGO_DATABASE")
+	if mongoDatabase == "" {
+		mongoDatabase = "zenith"
 	}
 
 	mongoUsername := os.Getenv("MONGO_USERNAME")
@@ -69,7 +69,7 @@ func InitConfigurations() *Config {
 	return &Config{
 		MongoHost:          mongoHost,
 		MongoPort:          mongoPort,
-		MongoDatabase:      mongoDatabse,
+		MongoDatabase:      mongoDatabase,
 		MongoUsername:      mongoUsername,
 		MongoPassword:      mongoPassword,
 		MongoAuthMechanism: mongoAuthMechanism,
