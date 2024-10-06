@@ -16,6 +16,9 @@ type Config struct {
 	MongoAuthMechanism string
 	LogLevel           string
 	AuthToken          string
+	EnableTLS          bool
+	TLSCertFile        string
+	TLSKeyFile         string
 }
 
 func InitConfigurations() *Config {
@@ -66,6 +69,23 @@ func InitConfigurations() *Config {
 		authToken = fmt.Sprintf("%x", b)
 	}
 
+	// Server TLS Configuration
+	enableTLS := false
+	enableTLSParam := os.Getenv("ENABLE_TLS")
+	if enableTLSParam == "true" {
+		enableTLS = true
+	}
+
+	tlsCertFile := os.Getenv("TLS_CERT")
+	if tlsCertFile == "" {
+		tlsCertFile = "server.crt"
+	}
+
+	tlsKeyFile := os.Getenv("TLS_KEY")
+	if tlsKeyFile == "" {
+		tlsKeyFile = "server.key"
+	}
+
 	return &Config{
 		MongoHost:          mongoHost,
 		MongoPort:          mongoPort,
@@ -76,6 +96,9 @@ func InitConfigurations() *Config {
 		LogLevel:           logLevel,
 		AuthToken:          authToken,
 		MongoTLS:           mongoTLS,
+		EnableTLS:          enableTLS,
+		TLSCertFile:        tlsCertFile,
+		TLSKeyFile:         tlsKeyFile,
 	}
 
 }

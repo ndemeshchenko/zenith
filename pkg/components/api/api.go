@@ -141,7 +141,18 @@ func Init(config *config.Config, mongoClient *mongo.Client) {
 			})
 		}
 	}
-	_ = router.Run("0.0.0.0:8080")
+
+	if config.EnableTLS && config.TLSCertFile != "" && config.TLSKeyFile != "" {
+		l.Logger.Info("Starting Zenithd with TLS enabled")
+		if err := router.RunTLS("0.0.0.0:443", config.TLSCertFile, config.TLSKeyFile); err != nil {
+			panic(err)
+		}
+	} else {
+		l.Logger.Info("Starting Zenithd :8080")
+		if err := router.Run("0.0.0.0:8080"); err != nil {
+			panic(err)
+		}
+	}
 }
 
 // TokenAuthMiddleware Super simple auth middleware just to cover the basics
