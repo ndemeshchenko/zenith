@@ -19,6 +19,7 @@ type Config struct {
 	EnableTLS          bool
 	TLSCertFile        string
 	TLSKeyFile         string
+	FE_URL             string
 }
 
 func InitConfigurations() *Config {
@@ -86,6 +87,11 @@ func InitConfigurations() *Config {
 		tlsKeyFile = "server.key"
 	}
 
+	feURL := os.Getenv("FE_URL")
+	if feURL == "" {
+		feURL = "http://localhost:3000"
+	}
+
 	return &Config{
 		MongoHost:          mongoHost,
 		MongoPort:          mongoPort,
@@ -99,6 +105,7 @@ func InitConfigurations() *Config {
 		EnableTLS:          enableTLS,
 		TLSCertFile:        tlsCertFile,
 		TLSKeyFile:         tlsKeyFile,
+		FE_URL:             feURL,
 	}
 
 }

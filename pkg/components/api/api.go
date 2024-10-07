@@ -23,7 +23,7 @@ func Init(config *config.Config, mongoClient *mongo.Client) {
 	//router.Use(cors.Default())
 
 	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowAllOrigins = true
+	corsConfig.AllowOrigins = []string{config.FE_URL}
 	corsConfig.AllowCredentials = true
 	corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
 
